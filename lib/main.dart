@@ -207,6 +207,7 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
         ),
         TextField(
           controller: textValue,
+          keyboardType: TextInputType.number,
           decoration: InputDecoration(
             border: OutlineInputBorder(),
             labelText: 'Killometre or miles',
