@@ -30,7 +30,6 @@ class SimpleCalculator extends StatefulWidget {
 }
 
 class _SimpleCalculatorState extends State<SimpleCalculator> {
-  //List<String> firebaseHistory = [];
   bool isKmToMil = false;
   bool isHistoryPressed = false;
   double convertionResult = 0.0;
@@ -48,16 +47,6 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
 
   final Stream<QuerySnapshot> firebaseHistory =
       FirebaseFirestore.instance.collection("history").snapshots();
-
-  // getData() {
-  //   CollectionReference collectionReference =
-  //       FirebaseFirestore.instance.collection("history");
-  //   collectionReference.snapshots().listen((snapshot) {
-  //     setState(() {
-  //       firebaseHistory = snapshot.docs.cast<String>();
-  //     });
-  //   });
-  // }
 
   buttonPressed(String buttonText) async {
     DateTime now = DateTime.now();
