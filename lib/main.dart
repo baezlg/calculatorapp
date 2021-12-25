@@ -1,4 +1,3 @@
-import 'package:calculatorapp/calculation_history_sharedPreference.dart';
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:intl/intl.dart';
@@ -31,7 +30,7 @@ class SimpleCalculator extends StatefulWidget {
 }
 
 class _SimpleCalculatorState extends State<SimpleCalculator> {
-  List<String> firebaseHistory = [];
+  //List<String> firebaseHistory = [];
   bool isKmToMil = false;
   bool isHistoryPressed = false;
   double convertionResult = 0.0;
@@ -47,17 +46,18 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
     super.initState();
   }
 
-  Future<String?> getHistory() {
-    return FirebaseFirestore.instance
-        .collection('history')
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      querySnapshot.docs.forEach((element) {
-        firebaseHistory.add(element["equation"]);
-      });
-    });
-  }
+  final Stream<QuerySnapshot> firebaseHistory =
+      FirebaseFirestore.instance.collection("history").snapshots();
 
+  // getData() {
+  //   CollectionReference collectionReference =
+  //       FirebaseFirestore.instance.collection("history");
+  //   collectionReference.snapshots().listen((snapshot) {
+  //     setState(() {
+  //       firebaseHistory = snapshot.docs.cast<String>();
+  //     });
+  //   });
+  // }
 
   buttonPressed(String buttonText) async {
     DateTime now = DateTime.now();
@@ -91,8 +91,6 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
 
           DatabaseService("${equation}= ${result} - ${formattedDate}")
               .addHistory();
-          getHistory();
-          print(firebaseHistory);
         } catch (e) {
           result = "Error";
         }
@@ -230,29 +228,38 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
 
   Widget historyScreen() {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("History"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                isHistoryPressed = false;
-              });
-            },
-            child: Text("back", style: TextStyle(color: Colors.white)),
-          )
-        ],
-      ),
-      body: Column(
-        children: firebaseHistory.map((h) {
-          return Container(
-            width: 1000,
-            padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
-            child: Text(h),
-          );
-        }).toList(),
-      ),
-    );
+        appBar: AppBar(
+          title: Text("History"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  isHistoryPressed = false;
+                });
+              },
+              child: Text("back", style: TextStyle(color: Colors.white)),
+            )
+          ],
+        ),
+        body: Container(
+          child: StreamBuilder<QuerySnapshot>(
+              stream: firebaseHistory,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Text("Error");
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Text("Loading");
+                }
+
+                final data = snapshot.requireData;
+                return ListView.builder(
+                    itemCount: data.size,
+                    itemBuilder: (context, index) {
+                      return Text("${data.docs[index]['equation']}");
+                    });
+              }),
+        ));
   }
 
   Widget kmToMil() {

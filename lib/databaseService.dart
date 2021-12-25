@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
@@ -15,4 +16,6 @@ class DatabaseService {
         .then((value) => print("equation Added"))
         .catchError((error) => print("Failed to add equation: $error"));
   }
+
+  
 }
