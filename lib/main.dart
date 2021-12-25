@@ -2,11 +2,14 @@ import 'package:calculatorapp/calculation_history_sharedPreference.dart';
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:calculatorapp/databaseService.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HistoryPreferences.init();
-
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -30,6 +33,7 @@ class SimpleCalculator extends StatefulWidget {
 
 class _SimpleCalculatorState extends State<SimpleCalculator> {
   List<String> history = [];
+  List<String> firebaseHistory = [];
   bool isKmToMil = false;
   bool isHistoryPressed = false;
   double convertionResult = 0.0;
@@ -45,6 +49,17 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
     super.initState();
 
     history = HistoryPreferences.getHistory() ?? [];
+  }
+
+  Future<String?> getHistory() {
+    return FirebaseFirestore.instance
+        .collection('history')
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((element) {
+        firebaseHistory.add(element["equation"]);
+      });
+    });
   }
 
   buttonPressed(String buttonText) async {
@@ -77,7 +92,11 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
           ContextModel cm = ContextModel();
           result = "${exp.evaluate(EvaluationType.REAL, cm)}";
           history.add("${equation}= ${result} - ${formattedDate}");
-          print(history);
+
+          DatabaseService("${equation}= ${result} - ${formattedDate}")
+              .addUser();
+          getHistory();
+          print(firebaseHistory);
         } catch (e) {
           result = "Error";
         }
@@ -220,16 +239,17 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
         title: Text("History"),
         actions: [
           TextButton(
-              onPressed: () {
-                setState(() {
-                  isHistoryPressed = false;
-                });
-              },
-           child: Text("back",  style: TextStyle(color: Colors.white)),)
+            onPressed: () {
+              setState(() {
+                isHistoryPressed = false;
+              });
+            },
+            child: Text("back", style: TextStyle(color: Colors.white)),
+          )
         ],
       ),
       body: Column(
-        children: history.map((h) {
+        children: firebaseHistory.map((h) {
           return Container(
             width: 1000,
             padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
