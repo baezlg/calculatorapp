@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await HistoryPreferences.init();
   await Firebase.initializeApp();
   runApp(const MyApp());
 }
@@ -32,7 +31,6 @@ class SimpleCalculator extends StatefulWidget {
 }
 
 class _SimpleCalculatorState extends State<SimpleCalculator> {
-  List<String> history = [];
   List<String> firebaseHistory = [];
   bool isKmToMil = false;
   bool isHistoryPressed = false;
@@ -47,8 +45,6 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
   @override
   void initState() {
     super.initState();
-
-    history = HistoryPreferences.getHistory() ?? [];
   }
 
   Future<String?> getHistory() {
@@ -61,6 +57,7 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
       });
     });
   }
+
 
   buttonPressed(String buttonText) async {
     DateTime now = DateTime.now();
@@ -91,10 +88,9 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
           Expression exp = p.parse(expression);
           ContextModel cm = ContextModel();
           result = "${exp.evaluate(EvaluationType.REAL, cm)}";
-          history.add("${equation}= ${result} - ${formattedDate}");
 
           DatabaseService("${equation}= ${result} - ${formattedDate}")
-              .addUser();
+              .addHistory();
           getHistory();
           print(firebaseHistory);
         } catch (e) {
@@ -111,7 +107,6 @@ class _SimpleCalculatorState extends State<SimpleCalculator> {
         }
       }
     });
-    await HistoryPreferences.setHistory(history);
   }
 
   Widget buildButton(String buttonText, double buttonHeight, Color buttonColor,
